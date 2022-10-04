@@ -62,3 +62,49 @@ io.on("connection", (socket) => {
 });
 
 server.listen(process.env.PORT || 3030);
+
+var User = require('./models/userModel'),
+  bodyParser = require('body-parser'),
+  jsonwebtoken = require("jsonwebtoken");
+
+
+const mongoose = require('mongoose');
+const option = {
+    socketTimeoutMS: 30000,
+    keepAlive: true
+};
+
+const mongoURI = process.env.MONGODB_URI;
+//mongodb://127.0.0.1:27017/?compressors=none
+mongoose.connect('mongodb+srv://admin_user:chip.the%40123@yilli.zfkq9pp.mongodb.net/?retryWrites=true&w=majority', option).then(function(){
+    //connected successfully
+    console.log("connected successfully")
+}, function(err) {
+    //err handle
+    console.log(err)
+});
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+app.use(function(req, res, next) {
+  if (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'JWT') {
+    jsonwebtoken.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode) {
+      if (err) req.user = undefined;
+      req.user = decode;
+      next();
+    });
+  } else {
+    req.user = undefined;
+    next();
+  }
+});
+var routes = require('./route/userRoutes');
+routes(app);
+
+app.use(function(req, res) {
+  res.status(404).send({ url: req.originalUrl + ' not found' })
+});
+
+
+
